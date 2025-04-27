@@ -1,3 +1,7 @@
-.venv
-Models
+venv/
+Models/
 .env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
