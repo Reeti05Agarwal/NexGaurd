@@ -1,3 +1,4 @@
 azure-eventhub
 pyodbc
 
+pip install flet matplotlib pyodbc python-dotenv pandas numpy scikit-learn azure-functions joblib

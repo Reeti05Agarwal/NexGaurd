@@ -43,14 +43,11 @@ if action == "drop":
                 EXEC('ALTER TABLE ChurnTable DROP CONSTRAINT ' + @ConstraintName)
             END
         """)
-    conn.commit()
+        cursor.execute(f"ALTER TABLE ChurnTable DROP COLUMN {column_name};")
 
-    
-    # Now drop the column
-    cursor.execute("ALTER TABLE ChurnTable DROP COLUMN Processed;")
     conn.commit()
     
-    print("Column 'Processed' and its constraint dropped successfully!")
+    print("Columns 'Processed', 'PredictedChurn', 'ChurnProbability' and its constraint dropped successfully!")
 
  
 
