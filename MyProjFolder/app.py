@@ -194,6 +194,7 @@ def main(page: ft.Page):
                 ]
             )
         ],
+        scroll=ft.ScrollMode.AUTO,
         expand=True
     )
 
@@ -225,6 +226,7 @@ def main(page: ft.Page):
             )
 
         ],
+        scroll=ft.ScrollMode.AUTO,
         expand=True
     )
 
@@ -253,6 +255,7 @@ def main(page: ft.Page):
             churn_chart
 
         ],
+        scroll=ft.ScrollMode.AUTO,
         expand=True
     )
 
@@ -262,9 +265,45 @@ def main(page: ft.Page):
             ft.ResponsiveRow(
                 controls=[
                     create_content_block(
-                        "Azure Function",
-                        "Azure Event Hub", 
+                        "Azure Active Directory (Azure AD)",
+                        "", 
                         ft.Colors.BLUE_100, ft.Colors.BLUE_200),
+                    create_content_block(
+                        "Azure Resource Management",
+                        " ", 
+                        ft.Colors.RED_100, ft.Colors.RED_200),
+                ]
+            ),
+            ft.ResponsiveRow(
+                controls=[
+                    create_content_block(
+                        "Azure SQL Database",
+                        " ", 
+                        ft.Colors.BLUE_100, ft.Colors.BLUE_200),
+                    create_content_block(
+                        "Azure Event Hub",
+                        " ", 
+                        ft.Colors.RED_100, ft.Colors.RED_200),
+                    create_content_block(
+                        "Azure Functions",
+                        " ", 
+                        ft.Colors.GREEN_100, ft.Colors.GREEN_200),
+                ]
+            ),
+            ft.ResponsiveRow(
+                controls=[
+                    create_content_block(
+                        "Azure RBAC for Resource Access",
+                        " ", 
+                        ft.Colors.BLUE_100, ft.Colors.BLUE_200),
+                    create_content_block(
+                        " Azure Key Vault",
+                        " ", 
+                        ft.Colors.RED_100, ft.Colors.RED_200),
+                    create_content_block(
+                        "Azure IAM",
+                        " ", 
+                        ft.Colors.GREEN_100, ft.Colors.GREEN_200),
                 ]
             ),
             ft.Text("Top 5 Customers from ChurnTable", size=24, weight='bold'),
@@ -299,6 +338,7 @@ def main(page: ft.Page):
                 height=500,
             )
         ],
+        scroll=ft.ScrollMode.AUTO,
         expand=True
     )
 
@@ -378,6 +418,7 @@ def main(page: ft.Page):
                 padding=10
             )
         ],
+        scroll=ft.ScrollMode.AUTO,
         spacing=10,
         alignment=ft.MainAxisAlignment.START
     )
