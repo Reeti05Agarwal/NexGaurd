@@ -41,13 +41,24 @@ def df_to_flet_table(df):
     return ft.DataTable(columns=columns, rows=rows)
 
 
-def print_churn_results():
-    with open("churnResults.json", "r") as f:
-        churn_results= json.load(f)
-    num_samples = churn_results.get("num_samples", 0)
-    num_churned = churn_results.get("num_churned", 0)
-    churn_rate= churn_results.get("churn_rate", 0)
-    return num_samples, num_churned, churn_rate
+def print_churn_results(churn_df):
+    num_samples = len(churn_df['PredictedChurn'])
+    num_churned = sum(churn_df['PredictedChurn'])
+    churn_rate = (num_churned / num_samples) * 100
+    num_nochurned = num_samples - num_churned
+
+    return num_samples, num_churned, churn_rate, num_nochurned
+
+def print_fraud_results(fraud_df):
+    logistic = fraud_df['LogisticPrediction']
+    randomforest = fraud_df['RandomForestPrediction']
+    meta = fraud_df['MetaPrediction']
+    fraud_samples = len(fraud_df['MetaPrediction'])
+    num_fraud = sum(fraud_df['MetaPrediction'])
+    num_no_fraud = fraud_samples - num_fraud
+    fraud_rate = (num_fraud / fraud_samples) * 100 
+
+    return fraud_samples, num_fraud, fraud_rate, num_no_fraud
 
 normal_radius = 50
 hover_radius = 60

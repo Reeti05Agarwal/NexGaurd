@@ -183,14 +183,14 @@ def main(mytimer: TimerRequest) -> None:
         print("Predictions:", final_preds)
         print("Prediction Probabilities:", final_probs)
 
-        df['Prediction'] =  final_preds
-        df['Probability'] = final_probs
+        df['PredictedChurn'] =  final_preds
+        df['ChurnProbability'] = final_probs
         df['Processed'] = 1 
         #df.to_csv("inference_results.csv", index=False)
         #print("[] Inference results saved to inference_results.csv")
        
-        num_samples = len(df['Prediction'])
-        num_churned = sum(df['Prediction'])
+        num_samples = len(df['PredictedChurn'])
+        num_churned = sum(df['PredictedChurn'])
         churn_rate = (num_churned / num_samples) * 100
  
         print("\n=== Churn Prediction Summary ===")
