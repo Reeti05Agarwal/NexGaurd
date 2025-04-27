@@ -1,63 +1,11 @@
 import flet as ft
-import matplotlib.pyplot as plt
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt 
 import pyodbc
-import os
-from dotenv import load_dotenv
-from function_app import num_samples, num_churned, churn_rate
-
-load_dotenv()
-
-SQL_SERVER = os.getenv("SQL_SERVER")
-SQL_DATABASE = os.getenv("SQL_DATABASE")
-SQL_USER = os.getenv("SQL_USER")
-SQL_PASSWORD = os.getenv("SQL_PASSWORD")
-driver = 'ODBC Driver 18 for SQL Server'
-connection_string = f"Driver={driver};Server={SQL_SERVER};Database={SQL_DATABASE};Uid={SQL_USER};Pwd={SQL_PASSWORD};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
-
-
-def connection_check():
-    try:
-        # Attempt to connect to the database
-        conn = pyodbc.connect(connection_string)
-        conn.close()  # Close connection if successful
-        return True  # Connection successful
-    except Exception as e:
-        print(f"Failed to connect to Azure SQL Database: {str(e)}")
-        return False  # Connection failed
-
-def create_churn_pie_chart(num_samples, num_churned, churn_rate):
-    num_notchurned = num_samples - num_churned
-
-    churn_labels = ['Churn', 'Non-Churn']
-
-    # Plotly Pie chart
-    fig = go.Figure(go.Pie(
-        labels=churn_labels,
-        values=[num_churned, num_notchurned],  # Corrected this line to pass both churned and non-churned values
-        hole=0.3,  # Makes it a donut chart
-        marker=dict(colors=["#ff7f0e", "#1f77b4"])
-    ))
-
-    # Save the chart to a file and return the path
-    chart_path = "churn_pie_chart.png"
-    fig.write_image(chart_path)
-    return chart_path
-
-
-def create_content_block(title, description, color_start, color_end):
-    return ft.Container(
-        content=ft.Column(
-            controls=[
-                ft.Text(title, size=20, weight=ft.FontWeight.BOLD, color=color_start),
-                ft.Text(description, size=14, color=color_end)
-            ]
-        ),
-        padding=10,
-        border_radius=10,
-        bgcolor=color_start,
-        margin=10
-    )
+import json
+from uploadingTable.churnTables.checkingChurn import checkingChurnTable 
+from uploadingTable.fraudTables.checkingFraud import checkingFraudTable
+from UI.Utilities import create_content_block, df_to_flet_table, print_churn_results, connection_check
+#from UI.profilPage import profile_view  
 
 
 def main(page: ft.Page):
@@ -72,9 +20,9 @@ def main(page: ft.Page):
         modal=True,
         title=ft.Text("Profile", weight="bold"),
         content=ft.Column([
-            ft.Text("Name: John Doe"),
-            ft.Text("Role: AI Analyst"),
-            ft.Text("Email: johndoe@example.com"),
+            ft.Text("Name: PBL"),
+            ft.Text("Role: Admin"),
+            ft.Text("Email: pbl@example.com"),
         ]),
         actions=[
             ft.TextButton("Close", on_click=lambda e: close_profile_dialog())
@@ -123,8 +71,8 @@ def main(page: ft.Page):
                     controls=[
                         ft.IconButton(ft.Icons.PERSON, icon_size=30, on_click=show_profile_dialog),
                         ft.Column([
-                            ft.Text("John Doe", size=14, color=ft.Colors.WHITE),
-                            ft.Text("AI Analyst", size=10, color=ft.Colors.GREY_400),
+                            ft.Text("PBL-I", size=14, color=ft.Colors.WHITE),
+                            ft.Text("Admin", size=10, color=ft.Colors.GREY_400),
                         ], spacing=2)
                         if sidebar_expanded else ft.Container(),
                     ],
@@ -174,42 +122,33 @@ def main(page: ft.Page):
     # Initially render sidebar
     sidebar = get_sidebar()
 
-    
-
-
-    # Helper function to create content blocks for views
-    def create_content_block(title, description, color, shadow_color):
-        return ft.Container(
-            content=ft.Column([
-                ft.Text(title, size=20, weight="bold", color="black"),
-                ft.Text(description, color="black"),
-            ]),
-            padding=20,
-            bgcolor=color,
-            border_radius=15,
-            shadow=ft.BoxShadow(blur_radius=10, color=shadow_color),
-            col={"sm": 12, "md": 6, "xl": 4},
-        )
-
     # Define different views (content areas)
     home_view = ft.Column(
         controls=[
             #ft.Text("CP", size=30),
+            # ft.ResponsiveRow(
+            #     controls=[
+            #         create_content_block("Fraud Detection in Transactions", "Features evaluted to predict anomaly", ft.Colors.BLUE_100, ft.Colors.BLUE_200),
+            #         create_content_block("Customer Behaviour Prediction", "Features evaluted to predict their behaviour", ft.Colors.RED_100, ft.Colors.RED_200)
+            #     ]
+            # ) 
+            ft.Text("Welcome to the Dashboard", size=30, weight="bold", color=ft.Colors.WHITE),
+            ft.Text("Explore the features and functionalities.", size=20, color=ft.Colors.WHITE),
             ft.ResponsiveRow(
                 controls=[
-                    create_content_block("Fraud Detection in Transactions", "Features evaluted to predict anomaly", ft.Colors.BLUE_100, ft.Colors.BLUE_200),
-                    create_content_block("Customer Behaviour Prediction", "Features evaluted to predict their behaviour", ft.Colors.RED_100, ft.Colors.RED_200)
-                ]
-            ),
-            ft.ResponsiveRow(
-                controls=[
-                    create_content_block("Features: ", "Features evaluted to predict their behaviour", ft.Colors.BLUE_100, ft.Colors.BLUE_200),
-                    create_content_block("Features: ", "", ft.Colors.RED_100, ft.Colors.RED_200)
+                    create_content_block("Fraud Detection in Transactions", "Features evaluated to predict anomaly", ft.Colors.BLUE_100, ft.Colors.BLUE_200),
+                    create_content_block("Customer Behaviour Prediction", "Features evaluated to predict their behaviour", ft.Colors.RED_100, ft.Colors.RED_200)
                 ]
             )
+
+
         ],
         expand=True
     )
+
+    df = checkingFraudTable()  # Get your df from DB
+    table = df_to_flet_table(df)  # Convert df to Flet DataTable
+
 
     fraud_detection_view = ft.Column(
         controls=[
@@ -220,55 +159,232 @@ def main(page: ft.Page):
                     create_content_block("Anomaly Detection", "Detect unusual behavior automatically.", ft.Colors.RED_100, ft.Colors.RED_200),
                     create_content_block("Reports", "View fraud detection statistics.", ft.Colors.GREEN_100, ft.Colors.GREEN_200),
                 ]
-            )
+            ),
+            
+
         ],
         expand=True
     )
 
-    donut_chart_path = create_churn_pie_chart(num_samples, num_churned, churn_rate)
-    #donut_chart_path = create_donut_chart()
+    with open("churnResults.json", "r") as f:
+        churn_results= json.load(f)
+        
+    num_samples = churn_results.get("num_samples", 0)
+    num_churned = churn_results.get("num_churned", 0)
+    churn_rate= churn_results.get("churn_rate", 0)
+    num_nochurned = num_samples - num_churned
+
+    # Get churn results
+    num_samples, num_churned, churn_rate = print_churn_results()
+
+
+    normal_radius = 50
+    hover_radius = 60
+    normal_title_style = ft.TextStyle(
+        size=16, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD
+    )
+    hover_title_style = ft.TextStyle(
+        size=22,
+        color=ft.Colors.WHITE,
+        weight=ft.FontWeight.BOLD,
+        shadow=ft.BoxShadow(blur_radius=2, color=ft.Colors.BLACK54),
+    )
+
+    def on_chart_event(e: ft.PieChartEvent):
+        for idx, section in enumerate(chart.sections):
+            if idx == e.section_index:
+                section.radius = hover_radius
+                section.title_style = hover_title_style
+            else:
+                section.radius = normal_radius
+                section.title_style = normal_title_style
+        chart.update()
+
+    chart = ft.PieChart(
+        sections=[
+            ft.PieChartSection(
+                num_churned,
+                title="Churn",
+                title_style=normal_title_style,
+                color=ft.Colors.BLUE,
+                radius=normal_radius,
+            ),
+            ft.PieChartSection(
+                num_nochurned,
+                title="No Churn",
+                title_style=normal_title_style,
+                color=ft.Colors.YELLOW,
+                radius=normal_radius,
+            ) 
+        ],
+        sections_space=0,
+        center_space_radius=40,
+        on_chart_event=on_chart_event,
+        expand=True,
+    )
+
+
+
+
+    df = checkingChurnTable()   
+    table = df_to_flet_table(df)  
+
+     
     customer_prediction_view = ft.Column(
         controls=[
-            #ft.Text("CP", size=30),
             ft.ResponsiveRow(
                 controls=[
-                    create_content_block("Number of Customer", "Real-time analysis of transactions.", ft.Colors.BLUE_100, ft.Colors.BLUE_200),
-                    create_content_block("Prediction Modeln", "Detect unusual behavior automatically.", ft.Colors.RED_100, ft.Colors.RED_200),
+                    create_content_block("Records", f"Total Number of Records: {num_samples}", ft.Colors.BLUE_100, ft.Colors.BLUE_200),
+                    create_content_block("Prediction Model", "Detect unusual behavior automatically.", ft.Colors.RED_100, ft.Colors.RED_200),
                     create_content_block("Reports", "View fraud detection statistics.", ft.Colors.GREEN_100, ft.Colors.GREEN_200),
                 ]
             ),
-            ft.Image(src=donut_chart_path, width=400, height=400)
+            ft.ResponsiveRow(
+                controls=[
+                    # Display real churn results by inserting values directly into the string
+                    create_content_block(
+                        "Churn Analysis",
+                        f"Total Number of Records: {num_samples} \nChurned Records: {num_churned} \nChurn Rate: {churn_rate:.2f}%",  # Format churn rate to 2 decimal places
+                        ft.Colors.BLUE_100,
+                        ft.Colors.BLUE_200
+                    ),
+                    create_content_block("Chart", chart, ft.Colors.RED_100, ft.Colors.RED_200),
+                    create_content_block("Reports", "View fraud detection statistics.", ft.Colors.GREEN_100, ft.Colors.GREEN_200),
+                ]
+            )
+
         ],
         expand=True
     )
+
+
 
     #return customer_prediction_view
 
     cloud_connection_view = ft.Column(
         controls=[
-            #ft.Text("CP", size=30),
+            ft.Text("Azure Features: ", size=30),
             ft.ResponsiveRow(
                 controls=[
-                    create_content_block("Search Bar", "Real-time analysis of transactions.", ft.Colors.BLUE_100, ft.Colors.BLUE_200),
+                    create_content_block(
+                        "Azure Function",
+                        "Azure Event Hub", 
+                        ft.Colors.BLUE_100, ft.Colors.BLUE_200),
                 ]
             ),
-            ft.ResponsiveRow(
-                controls=[
-                    create_content_block("Search Bar", "Real-time analysis of transactions.", ft.Colors.BLUE_100, ft.Colors.BLUE_200),
-                ]
+            ft.Text("Top 5 Customers from ChurnTable", size=24, weight='bold'),
+            ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Column(
+                            controls=[table],
+                            scroll=ft.ScrollMode.AUTO,
+                            expand=True
+                        )
+                    ],
+                    scroll=ft.ScrollMode.AUTO,
+                ),
+                width=1500,
+                height=500,
+            ),
+
+            ft.Text("Top 5 Customers from FraudTable", size=24, weight='bold'),
+            ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Column(
+                            controls=[table],
+                            scroll=ft.ScrollMode.AUTO,
+                            expand=True
+                        )
+                    ],
+                    scroll=ft.ScrollMode.AUTO,
+                ),
+                width=1500,
+                height=500,
             )
         ],
         expand=True
     )
 
     profile_view = ft.Column(
+        width=500,
         controls=[
-            ft.ResponsiveRow(
-                controls=[
+            ft.Text("👤 Profile", size=24, weight="bold"),
+            ft.Container(
+                content=ft.Row(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    controls=[
+                        ft.CircleAvatar(
+                            #foreground_image_url="",
+                            radius=50
+                        ),
+                        ft.IconButton(
+                            icon=ft.Icons.EDIT,
+                            tooltip="Change profile picture",
+                            icon_color="blue",
+                            on_click=lambda _: print("Change profile pic clicked"),
+                        )
+                    ]
+                ),
+                padding=10
+            ),
+            ft.TextField(
+                label="Username",
+                value="reeti.sharma",
+                prefix_icon=ft.Icons.PERSON,
+                read_only=False,
+                border_radius=10
+            ),
+            ft.TextField(
+                label="Role",
+                value="AI Cyber Lab Analyst",
+                prefix_icon=ft.Icons.BADGE,
+                read_only=True,
+                border_radius=10
+            ),
+            ft.TextField(
+                label="Email",
+                value="reeti.sharma@company.com",
+                prefix_icon=ft.Icons.EMAIL,
+                read_only=True,
+                border_radius=10
+            ),
+            ft.Divider(),
 
-                ]
+            ft.Text("🔒 Change Password", size=18, weight="bold"),
+            ft.TextField(
+                label="Current Password",
+                password=True,
+                can_reveal_password=True,
+                border_radius=10
+            ),
+            ft.TextField(
+                label="New Password",
+                password=True,
+                can_reveal_password=True,
+                border_radius=10
+            ),
+            ft.TextField(
+                label="Confirm New Password",
+                password=True,
+                can_reveal_password=True,
+                border_radius=10
+            ),
+            ft.Container(
+                content=ft.ElevatedButton(
+                    text="Save Changes",
+                    icon=ft.Icons.SAVE,
+                    on_click=lambda _: print("Save clicked"),
+                    bgcolor="blue",
+                    color="white",
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10))
+                ),
+                padding=10
             )
-        ]
+        ],
+        spacing=10,
+        alignment=ft.MainAxisAlignment.START
     )
 
     settings_view = ft.Column(
@@ -284,7 +400,7 @@ def main(page: ft.Page):
     cloud_connected = connection_check()
 
     cloud_status = ft.Container(
-        #ft.IconButton(ft.Icons.PERSON, icon_size=30, on_click=show_profile_dialog),
+     
         content=ft.Text(
             "Cloud Connected" if cloud_connected else "Cloud Disconnected",
             color=ft.Colors.WHITE,
@@ -312,12 +428,12 @@ def main(page: ft.Page):
         ),
         bgcolor=ft.Colors.BLUE_50,
         padding=10,
-        border_radius=15  # Rounded corners for header
+        border_radius=15  
     )
 
     # Main content area to hold dynamic content
     content_area = ft.Column(
-        controls=[home_view],  # Start with the home view
+        controls=[home_view],   
         expand=True
     )
 
