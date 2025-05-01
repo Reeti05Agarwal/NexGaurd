@@ -23,7 +23,7 @@ def checkingChurnTable():
     engine = create_engine(f"mssql+pyodbc:///?odbc_connect={quote_plus(connection_string)}")
 
     # Query the uploaded data
-    df = pd.read_sql("SELECT TOP 5 * FROM ChurnTable", con=engine)
+    df = pd.read_sql("SELECT * FROM ChurnTable", con=engine)
     return df
 
 def recordsChurnTable():
