@@ -1,10 +1,9 @@
 import flet as ft
 import matplotlib.pyplot as plt 
 import pyodbc
-import json
 from uploadingTable.churnTables.checkingChurn import checkingChurnTable 
 from uploadingTable.fraudTables.checkingFraud import checkingFraudTable
-from UI.Utilities import create_content_block, print_fraud_results, df_to_flet_table, print_churn_results, connection_check
+from UI.Utilities import create_content_block, print_fraud_results, df_to_flet_table, print_churn_results, connection_check, generate_customer_report
 
 
 def main(page: ft.Page):
@@ -20,12 +19,8 @@ def main(page: ft.Page):
     fraud_pie = num_fraud / fraud_samples * 100
     not_fraud_pie = num_no_fraud / fraud_samples * 100
     fruad_table = df_to_flet_table(fraud_df)   
-    churn_df = checkingChurnTable()   
-    num_samples, num_churned, churn_rate, num_nochurned = print_churn_results(churn_df)
-    churn_pie = num_churned / num_samples * 100
-    not_churn_pie = num_nochurned / num_samples * 100
-    churn_table = df_to_flet_table(churn_df)  
-
+    
+    generate_customer_report()
 
 # =============CHurn & Fraud Charts===================
     normal_radius = 50
@@ -56,53 +51,20 @@ def main(page: ft.Page):
                 fraud_pie,
                 title="Fraud",
                 title_style=normal_title_style,
-                color=ft.Colors.BLUE,
+                color=ft.Colors.RED,
                 radius=normal_radius,
             ),
             ft.PieChartSection(
                 not_fraud_pie,
                 title="Not Fraud",
                 title_style=normal_title_style,
-                color=ft.Colors.YELLOW,
+                color=ft.Colors.GREEN,
                 radius=normal_radius,
             )
         ],
         sections_space=0,
         center_space_radius=40,
         on_chart_event=on_fraud_chart_event,
-        expand=True,
-    )
-
-    def on_churn_chart_event(e: ft.PieChartEvent):
-        for idx, section in enumerate(churn_chart.sections):
-            if idx == e.section_index:
-                section.radius = hover_radius
-                section.title_style = hover_title_style
-            else:
-                section.radius = normal_radius
-                section.title_style = normal_title_style
-        churn_chart.update()
-
-    churn_chart = ft.PieChart(
-        sections=[
-            ft.PieChartSection(
-                churn_pie,
-                title="Churn",
-                title_style=normal_title_style,
-                color=ft.Colors.BLUE,
-                radius=normal_radius,
-            ),
-            ft.PieChartSection(
-                not_churn_pie,
-                title="Not Churn",
-                title_style=normal_title_style,
-                color=ft.Colors.YELLOW,
-                radius=normal_radius,
-            )
-        ],
-        sections_space=0,
-        center_space_radius=40,
-        on_chart_event=on_churn_chart_event,
         expand=True,
     )
 
@@ -230,30 +192,14 @@ def main(page: ft.Page):
         expand=True
     )
 
+    report=generate_customer_report()
     customer_prediction_view = ft.Column(
         controls=[
-            ft.ResponsiveRow(
-                controls=[
-                    create_content_block("Records", f"Total Number of Records: {num_samples}", ft.Colors.BLUE_100, ft.Colors.BLUE_200),
-                    create_content_block("Prediction Model", "Detect unusual behavior automatically.", ft.Colors.RED_100, ft.Colors.RED_200),
-                    create_content_block("Reports", "View fraud detection statistics.", ft.Colors.GREEN_100, ft.Colors.GREEN_200),
-                ]
-            ),
-            ft.ResponsiveRow(
-                controls=[
-                    # Display real churn results by inserting values directly into the string
-                    create_content_block(
-                        "Churn Analysis",
-                        f"Total Number of Records: {num_samples} \nChurned Records: {num_churned} \nNo Churn Records: {num_nochurned} \nChurn Rate: {churn_rate:.2f}%",  # Format churn rate to 2 decimal places
-                        ft.Colors.BLUE_100,
-                        ft.Colors.BLUE_200
-                    ),
-                    #create_content_block("Chart", churn_chart, ft.Colors.RED_100, ft.Colors.RED_200),
-                    create_content_block("Reports", "View fraud detection statistics.", ft.Colors.GREEN_100, ft.Colors.GREEN_200),
-                ]
-            ),
-            churn_chart
-
+            ft.Container(
+                content=report,
+                border_radius=15,
+                shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.BLACK54)
+            )
         ],
         scroll=ft.ScrollMode.AUTO,
         expand=True
@@ -306,21 +252,21 @@ def main(page: ft.Page):
                         ft.Colors.GREEN_100, ft.Colors.GREEN_200),
                 ]
             ),
-            ft.Text("Top 5 Customers from ChurnTable", size=24, weight='bold'),
-            ft.Container(
-                content=ft.Row(
-                    controls=[
-                        ft.Column(
-                            controls=[churn_table],
-                            scroll=ft.ScrollMode.AUTO,
-                            expand=True
-                        )
-                    ],
-                    scroll=ft.ScrollMode.AUTO,
-                ),
-                width=1500,
-                height=500,
-            ),
+            # ft.Text("Top 5 Customers from ChurnTable", size=24, weight='bold'),
+            # ft.Container(
+            #     content=ft.Row(
+            #         controls=[
+            #             ft.Column(
+            #                 controls=[churn_table],
+            #                 scroll=ft.ScrollMode.AUTO,
+            #                 expand=True
+            #             )
+            #         ],
+            #         scroll=ft.ScrollMode.AUTO,
+            #     ),
+            #     width=1500,
+            #     height=500,
+            # ),
 
             ft.Text("Top 5 Customers from FraudTable", size=24, weight='bold'),
             ft.Container(

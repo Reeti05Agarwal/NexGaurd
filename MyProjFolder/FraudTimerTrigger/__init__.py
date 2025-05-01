@@ -168,17 +168,17 @@ def main(mytimer: TimerRequest) -> None:
 
          
         for _, record in X_test_df.iterrows():
-            customer_id = record["customer_id"]
-            if "customer_id" in record:
-                cursor.execute("UPDATE FraudTable SET Processed=1 WHERE customer_id=?", record["customer_id"])
+            TransactionID = record["TransactionID"]
+            if "TransactionID" in record:
+                cursor.execute("UPDATE FraudTable SET Processed=1 WHERE TransactionID=?", record["TransactionID"])
             else:
-                logging.warning("Missing customer_id for a record, skipping update.")
+                logging.warning("Missing TransactionID for a record, skipping update.")
 
 
 
         conn.commit()
-        print("All churn predictions processed")
-        logging.info("All churn predictions processed.")
+        print("All fraud predictions processed")
+        logging.info("All fraud predictions processed.")
 
     except Exception as e:
         logging.error(f"Error in fraud prediction trigger: {e}")
