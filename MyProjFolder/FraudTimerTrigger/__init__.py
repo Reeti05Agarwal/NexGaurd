@@ -168,9 +168,18 @@ def main(mytimer: TimerRequest) -> None:
 
          
         for _, record in X_test_df.iterrows():
-            TransactionID = record["TransactionID"]
             if "TransactionID" in record:
-                cursor.execute("UPDATE FraudTable SET Processed=1 WHERE TransactionID=?", record["TransactionID"])
+                update_query = """
+                    UPDATE FraudTable
+                    SET LR_Prediction = ?, RF_Prediction = ?, Meta_Prediction = ?, Processed = 1
+                    WHERE TransactionID = ?
+                """
+                cursor.execute(update_query,
+                    float(record['LR_Prediction']),
+                    float(record['RF_Prediction']),
+                    int(record['Meta_Prediction']),
+                    record['TransactionID']
+                )
             else:
                 logging.warning("Missing TransactionID for a record, skipping update.")
 

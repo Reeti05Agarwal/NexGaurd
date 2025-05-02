@@ -2,7 +2,7 @@ import flet as ft
 import matplotlib.pyplot as plt 
 from uploadingTable.churnTables.checkingChurn import checkingChurnTable 
 from uploadingTable.fraudTables.checkingFraud import checkingFraudTable
-from UI.Utilities import create_content_block, create_card, connection_check, generate_customer_report, generate_fraud_report
+from UI.Utilities import create_content_block, create_card, connection_check, generate_customer_report, generate_fraud_report, return_flet_table
 from flet.auth.providers import AzureOAuthProvider
 import os
 from dotenv import load_dotenv
@@ -18,71 +18,24 @@ def main(page: ft.Page):
     title = "Home"
 
 
-# =============AZURE AUTH===================
-    # azure_provider = AzureOAuthProvider(
-    #     client_id=os.getenv("AZURE_CLIENT_ID"),
-    #     client_secret=os.getenv("AZURE_CLIENT_SECRET"),
-    #     redirect_url="http://localhost:8550/oauth_callback",
-    # )
+    churn_table, fruad_table = return_flet_table()   
+    
 
-    # def on_login(e):
-    #     if e.error:
-    #         print("Login failed:", e.error)
-    #     else:
-    #         print("Login successful!")
-    #         if page.auth and page.auth.token:
-    #             print("Access token:", page.auth.token.access_token)
-    #         if page.auth and page.auth.user:
-    #             print("User ID:", page.auth.user.id)
-    #             print("User details:", page.auth.user)
-    #             profile_view.controls = [
-    #                 ft.Text("👤 Profile", size=24, weight="bold"),
-    #                 ft.Text(f"Username: {page.auth.user.name}", size=16),
-    #                 ft.Text(f"Role: {page.auth.user.role}", size=16),
-    #                 ft.Text(f"Email: {page.auth.user.email}", size=16),
-    #                 logout_button
-    #             ]
-    #             page.update()
-
-    # def on_logout(e):
-    #     print("User logged out")
-    #     profile_view.controls = [login_button]
-    #     page.update()
-
-    # def on_route_change(e):
-    #     print("Route changed to:", page.route)
-    #     if page.route.startswith("/oauth_callback"):
-    #         print("Handling OAuth callback...")
-    #         page.login(azure_provider)
-
-
-    # login_button = ft.ElevatedButton("Login with Azure", on_click=lambda e: page.login(azure_provider))
-    # logout_button = ft.ElevatedButton("Logout", on_click=lambda e: page.logout())
-
-    # page.on_login = on_login
-    # page.on_logout = on_logout
-    # page.on_route_change = on_route_change
-
-# =============CHurn & Fraud Tables===================
-    #generate_fraud_report()    #fraud_report
-    #generate_customer_report() #report
-
-# =============FUNCTIONS===================
     header_title = ft.Text(title, size=20, weight="bold", expand=True, color="grey")
+  
     def update_view(selected_index: int):
         titles = ["Home", "Fraud Detection", "Customer Prediction", "Cloud Database", "Profile", "Settings"]
         nonlocal title
         header_title.value = titles[selected_index]
 
-        if selected_index == 4:  # Profile view
-            # if selected_index == 4:  # Profile view
-                # if page.auth and page.auth.user:
-                    content_area.controls = [profile_view]
-                # else:
-                #     content_area.controls = [ft.Column(controls=[login_button])]
-
-        elif selected_index == 5:  # Settings view
+        if selected_index == 4:
+            content_area.controls = [profile_view]
+        elif selected_index == 5:
             content_area.controls = [settings_view]
+        elif selected_index == 3:  # Cloud Database
+            churn_table, fruad_table = return_flet_table()  # <- Fetch only now
+            updated_view = generate_cloud_database_view(churn_table, fruad_table)
+            content_area.controls = [updated_view]
         else:
             content_area.controls = [views[selected_index]]
 
@@ -324,11 +277,11 @@ def main(page: ft.Page):
         expand=True
     )
 
-    report=generate_customer_report()
+    churn_report=generate_customer_report()
     customer_prediction_view = ft.Column(
         controls=[
             ft.Container(
-                content=report,
+                content=churn_report,
                 border_radius=15,
                 shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.BLACK54)
             )
@@ -337,84 +290,97 @@ def main(page: ft.Page):
         expand=True
     )
 
+    def generate_cloud_database_view(churn_table, fruad_table):
+        return ft.Column(
+            controls=[
+                ft.Text("Azure Features: ", size=30),
+                ft.ResponsiveRow(
+                    controls=[
+                        create_content_block(
+                            "Azure Active Directory (Azure AD)",
+                            "", 
+                            ft.Colors.BLUE_100, ft.Colors.BLUE_200),
+                        create_content_block(
+                            "Azure Resource Management",
+                            " ", 
+                            ft.Colors.RED_100, ft.Colors.RED_200),
+                    ]
+                ),
+                ft.ResponsiveRow(
+                    controls=[
+                        create_content_block(
+                            "Azure SQL Database",
+                            " ", 
+                            ft.Colors.BLUE_100, ft.Colors.BLUE_200),
+                        create_content_block(
+                            "Azure Event Hub",
+                            " ", 
+                            ft.Colors.RED_100, ft.Colors.RED_200),
+                        create_content_block(
+                            "Azure Functions",
+                            " ", 
+                            ft.Colors.GREEN_100, ft.Colors.GREEN_200),
+                    ]
+                ),
+                ft.ResponsiveRow(
+                    controls=[
+                        create_content_block(
+                            "Azure RBAC for Resource Access",
+                            " ", 
+                            ft.Colors.BLUE_100, ft.Colors.BLUE_200),
+                        create_content_block(
+                            " Azure Key Vault",
+                            " ", 
+                            ft.Colors.RED_100, ft.Colors.RED_200),
+                        create_content_block(
+                            "Azure IAM",
+                            " ", 
+                            ft.Colors.GREEN_100, ft.Colors.GREEN_200),
+                    ]
+                ),
+                ft.Text("Top 5 Customers from ChurnTable", size=24, weight='bold'),
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Column(
+                                controls=[churn_table],
+                                scroll=ft.ScrollMode.AUTO,
+                                expand=True
+                            )
+                        ],
+                        scroll=ft.ScrollMode.AUTO,
+                    ),
+                    width=1500,
+                    height=500,
+                ),
+
+                ft.Text("Top 5 Customers from FraudTable", size=24, weight='bold'),
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Column(
+                                controls=[fruad_table],
+                                scroll=ft.ScrollMode.AUTO,
+                                expand=True
+                            )
+                        ],
+                        scroll=ft.ScrollMode.AUTO,
+                    ),
+                    width=1500,
+                    height=500,
+                )
+            ],
+            scroll=ft.ScrollMode.AUTO,
+            expand=True
+        )
+
     cloud_connection_view = ft.Column(
         controls=[
-            ft.Text("Azure Features: ", size=30),
-            ft.ResponsiveRow(
-                controls=[
-                    create_content_block(
-                        "Azure Active Directory (Azure AD)",
-                        "", 
-                        ft.Colors.BLUE_100, ft.Colors.BLUE_200),
-                    create_content_block(
-                        "Azure Resource Management",
-                        " ", 
-                        ft.Colors.RED_100, ft.Colors.RED_200),
-                ]
-            ),
-            ft.ResponsiveRow(
-                controls=[
-                    create_content_block(
-                        "Azure SQL Database",
-                        " ", 
-                        ft.Colors.BLUE_100, ft.Colors.BLUE_200),
-                    create_content_block(
-                        "Azure Event Hub",
-                        " ", 
-                        ft.Colors.RED_100, ft.Colors.RED_200),
-                    create_content_block(
-                        "Azure Functions",
-                        " ", 
-                        ft.Colors.GREEN_100, ft.Colors.GREEN_200),
-                ]
-            ),
-            ft.ResponsiveRow(
-                controls=[
-                    create_content_block(
-                        "Azure RBAC for Resource Access",
-                        " ", 
-                        ft.Colors.BLUE_100, ft.Colors.BLUE_200),
-                    create_content_block(
-                        " Azure Key Vault",
-                        " ", 
-                        ft.Colors.RED_100, ft.Colors.RED_200),
-                    create_content_block(
-                        "Azure IAM",
-                        " ", 
-                        ft.Colors.GREEN_100, ft.Colors.GREEN_200),
-                ]
-            ),
-            # ft.Text("Top 5 Customers from ChurnTable", size=24, weight='bold'),
-            # ft.Container(
-            #     content=ft.Row(
-            #         controls=[
-            #             ft.Column(
-            #                 controls=[churn_table],
-            #                 scroll=ft.ScrollMode.AUTO,
-            #                 expand=True
-            #             )
-            #         ],
-            #         scroll=ft.ScrollMode.AUTO,
-            #     ),
-            #     width=1500,
-            #     height=500,
-            # ),
-
-            # ft.Text("Top 5 Customers from FraudTable", size=24, weight='bold'),
-            # ft.Container(
-            #     content=ft.Row(
-            #         controls=[
-            #             ft.Column(
-            #                 controls=[fruad_table],
-            #                 scroll=ft.ScrollMode.AUTO,
-            #                 expand=True
-            #             )
-            #         ],
-            #         scroll=ft.ScrollMode.AUTO,
-            #     ),
-            #     width=1500,
-            #     height=500,
-            # )
+            ft.Container(
+                content=fraud_report,
+                border_radius=15,
+                shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.BLACK54)
+            )
         ],
         scroll=ft.ScrollMode.AUTO,
         expand=True
@@ -576,7 +542,6 @@ def main(page: ft.Page):
 
     page.update()  
 
-# =============Running the Functions===================
 ft.app(target=main)
 
 

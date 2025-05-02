@@ -22,14 +22,14 @@ if len(sys.argv) < 2:
 action = sys.argv[1].lower() 
 
 if action == "add":
-    cursor.execute("ALTER TABLE FraudTable ADD LogisticPrediction FLOAT NOT NULL DEFAULT 0;")
-    cursor.execute("ALTER TABLE FraudTable ADD RandomForestPrediction FLOAT NOT NULL DEFAULT 0;")
-    cursor.execute("ALTER TABLE FraudTable ADD MetaPrediction INT NOT NULL DEFAULT 0;")
+    cursor.execute("ALTER TABLE FraudTable ADD LR_Prediction FLOAT NOT NULL DEFAULT 0;")
+    cursor.execute("ALTER TABLE FraudTable ADD RF_Prediction FLOAT NOT NULL DEFAULT 0;")
+    cursor.execute("ALTER TABLE FraudTable ADD Meta_Prediction INT NOT NULL DEFAULT 0;")
     cursor.execute("ALTER TABLE FraudTable ADD Processed BIT NOT NULL DEFAULT 0;")
     conn.commit()
     print("Column 'Processed' added successfully!")
 if action == "drop":
-    for column_name in ['Processed', 'PredictedChurn', 'ChurnProbability']:
+    for column_name in ['Processed', 'LR_Prediction', 'RF_Prediction', 'Meta_Prediction']:
         cursor.execute(f"""
             DECLARE @ConstraintName NVARCHAR(200)
             SELECT @ConstraintName = dc.name
@@ -42,14 +42,11 @@ if action == "drop":
                 EXEC('ALTER TABLE FraudTable DROP CONSTRAINT ' + @ConstraintName)
             END
         """)
+        cursor.execute(f"ALTER TABLE FraudTable DROP COLUMN {column_name};")
     conn.commit()
 
-    
-    # Now drop the column
-    cursor.execute("ALTER TABLE FraudTable DROP COLUMN Processed;")
-    conn.commit()
-    
-    print("Column 'Processed' and its constraint dropped successfully!")
+        
+    print("Column 'Processed', 'LR_Prediction', 'RF_Prediction', 'Meta_Prediction' and its constraint dropped successfully!")
 
 cursor.close()
 conn.close()

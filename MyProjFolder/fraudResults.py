@@ -18,10 +18,15 @@ def ConnectionString():
 
 
 
-logistic = fraud_df['LogisticPrediction']
-randomforest = fraud_df['RandomForestPrediction']
-meta = fraud_df['MetaPrediction']
-fraud_samples = len(fraud_df['MetaPrediction'])
-num_fraud = sum(fraud_df['MetaPrediction'])
+logistic = fraud_df['LR_Prediction']
+randomforest = fraud_df['RF_Prediction']
+meta = fraud_df['Meta_Prediction']
+fraud_samples = len(fraud_df['Meta_Prediction'])
+num_fraud = sum(fraud_df['Meta_Prediction'])
 num_no_fraud = fraud_samples - num_fraud
 fraud_rate = (num_fraud / fraud_samples) * 100 
+
+print("LogisticPrediction: ", logistic)
+print("RandomForestPrediction: ", randomforest)
+print("MetaPrediction: ", meta)
+print("Fraud Rate: ",fraud_rate)
