@@ -9,8 +9,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-
-
 def main(page: ft.Page):
     page.title = "Dashboard"
     page.bgcolor = ft.Colors.BLACK

@@ -109,6 +109,27 @@ def main(page: ft.Page):
         fit=ft.ImageFit.CONTAIN
     )
 
+    fraud_img = ft.Image(
+        src="fraud.png",  
+        width=350,
+        height=300,
+        fit=ft.ImageFit.CONTAIN
+    )
+
+    churn_img = ft.Image(
+        src="churn.png",  
+        width=350,
+        height=300,
+        fit=ft.ImageFit.CONTAIN
+    )
+
+    cloud_img = ft.Image(
+        src="cloud.png",  
+        width=350,
+        height=300,
+        fit=ft.ImageFit.CONTAIN
+    )
+
     zero_img = ft.Image(
         src="zeroTrust.png",   
         width=350,
@@ -147,9 +168,10 @@ def main(page: ft.Page):
                         expand=1
                     ),
                     ft.Container(
-                        content=teacher_img,
+                        content=fraud_img,
                         expand=1
-                    )
+                    ),
+                    
                 ],
                 spacing=50,
                 alignment=ft.MainAxisAlignment.START
@@ -158,7 +180,7 @@ def main(page: ft.Page):
             ft.Row(
                 controls=[
                     ft.Container(
-                        content=teacher_img,
+                        content=churn_img,
                         expand=1
                     ),
                     ft.Container(
@@ -230,7 +252,7 @@ def main(page: ft.Page):
                         expand=1
                     ),
                     ft.Container(
-                        content=zero_img,
+                        content=cloud_img,
                         expand=1
                     ),
                 ],
