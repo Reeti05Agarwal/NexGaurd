@@ -14,6 +14,7 @@ def ConnectionString():
     driver = 'ODBC Driver 18 for SQL Server'
     connection_string = f"Driver={driver};Server={SQL_SERVER};Database={SQL_DATABASE};Uid={SQL_USER};Pwd={SQL_PASSWORD};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
     return connection_string
+ 
 
 def checkingFraudTable():
 
@@ -25,4 +26,4 @@ def checkingFraudTable():
     df = pd.read_sql("SELECT TOP 5 * FROM FraudTable", con=engine)
     return df
 
-print(checkingFraudTable())
+ 

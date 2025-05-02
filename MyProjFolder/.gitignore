@@ -18,9 +18,12 @@ project.lock.json
 /App_Data
 /secrets
 /data
+/storage
+/build
 .secrets
 appsettings.json
 local.settings.json
+\build\app\app.pkg
 
 node_modules
 dist

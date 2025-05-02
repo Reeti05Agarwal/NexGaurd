@@ -1,9 +1,14 @@
 import flet as ft
 import matplotlib.pyplot as plt 
-import pyodbc
 from uploadingTable.churnTables.checkingChurn import checkingChurnTable 
 from uploadingTable.fraudTables.checkingFraud import checkingFraudTable
-from UI.Utilities import create_content_block, print_fraud_results, df_to_flet_table, print_churn_results, connection_check, generate_customer_report
+from UI.Utilities import create_content_block, create_card, connection_check, generate_customer_report, generate_fraud_report
+from flet.auth.providers import AzureOAuthProvider
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+
 
 
 def main(page: ft.Page):
@@ -13,60 +18,54 @@ def main(page: ft.Page):
     title = "Home"
 
 
+# =============AZURE AUTH===================
+    # azure_provider = AzureOAuthProvider(
+    #     client_id=os.getenv("AZURE_CLIENT_ID"),
+    #     client_secret=os.getenv("AZURE_CLIENT_SECRET"),
+    #     redirect_url="http://localhost:8550/oauth_callback",
+    # )
+
+    # def on_login(e):
+    #     if e.error:
+    #         print("Login failed:", e.error)
+    #     else:
+    #         print("Login successful!")
+    #         if page.auth and page.auth.token:
+    #             print("Access token:", page.auth.token.access_token)
+    #         if page.auth and page.auth.user:
+    #             print("User ID:", page.auth.user.id)
+    #             print("User details:", page.auth.user)
+    #             profile_view.controls = [
+    #                 ft.Text("👤 Profile", size=24, weight="bold"),
+    #                 ft.Text(f"Username: {page.auth.user.name}", size=16),
+    #                 ft.Text(f"Role: {page.auth.user.role}", size=16),
+    #                 ft.Text(f"Email: {page.auth.user.email}", size=16),
+    #                 logout_button
+    #             ]
+    #             page.update()
+
+    # def on_logout(e):
+    #     print("User logged out")
+    #     profile_view.controls = [login_button]
+    #     page.update()
+
+    # def on_route_change(e):
+    #     print("Route changed to:", page.route)
+    #     if page.route.startswith("/oauth_callback"):
+    #         print("Handling OAuth callback...")
+    #         page.login(azure_provider)
+
+
+    # login_button = ft.ElevatedButton("Login with Azure", on_click=lambda e: page.login(azure_provider))
+    # logout_button = ft.ElevatedButton("Logout", on_click=lambda e: page.logout())
+
+    # page.on_login = on_login
+    # page.on_logout = on_logout
+    # page.on_route_change = on_route_change
+
 # =============CHurn & Fraud Tables===================
-    fraud_df = checkingFraudTable()   
-    fraud_samples, num_fraud, fraud_rate, num_no_fraud = print_fraud_results(fraud_df)
-    fraud_pie = num_fraud / fraud_samples * 100
-    not_fraud_pie = num_no_fraud / fraud_samples * 100
-    fruad_table = df_to_flet_table(fraud_df)   
-    
-    generate_customer_report()
-
-# =============CHurn & Fraud Charts===================
-    normal_radius = 50
-    hover_radius = 60
-    normal_title_style = ft.TextStyle(
-        size=16, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD
-    )
-    hover_title_style = ft.TextStyle(
-        size=22,
-        color=ft.Colors.WHITE,
-        weight=ft.FontWeight.BOLD,
-        shadow=ft.BoxShadow(blur_radius=2, color=ft.Colors.BLACK54),
-    )
-
-    def on_fraud_chart_event(e: ft.PieChartEvent):
-        for idx, section in enumerate(fraud_chart.sections):
-            if idx == e.section_index:
-                section.radius = hover_radius
-                section.title_style = hover_title_style
-            else:
-                section.radius = normal_radius
-                section.title_style = normal_title_style
-        fraud_chart.update()
-
-    fraud_chart = ft.PieChart(
-        sections=[
-            ft.PieChartSection(
-                fraud_pie,
-                title="Fraud",
-                title_style=normal_title_style,
-                color=ft.Colors.RED,
-                radius=normal_radius,
-            ),
-            ft.PieChartSection(
-                not_fraud_pie,
-                title="Not Fraud",
-                title_style=normal_title_style,
-                color=ft.Colors.GREEN,
-                radius=normal_radius,
-            )
-        ],
-        sections_space=0,
-        center_space_radius=40,
-        on_chart_event=on_fraud_chart_event,
-        expand=True,
-    )
+    #generate_fraud_report()    #fraud_report
+    #generate_customer_report() #report
 
 # =============FUNCTIONS===================
     header_title = ft.Text(title, size=20, weight="bold", expand=True, color="grey")
@@ -74,15 +73,20 @@ def main(page: ft.Page):
         titles = ["Home", "Fraud Detection", "Customer Prediction", "Cloud Database", "Profile", "Settings"]
         nonlocal title
         header_title.value = titles[selected_index]
-        if selected_index == 4:  # Profile view selected (index 4)
-            content_area.controls = [profile_view]
-        elif selected_index == 5:  # Settings view selected (index 5)
+
+        if selected_index == 4:  # Profile view
+            # if selected_index == 4:  # Profile view
+                # if page.auth and page.auth.user:
+                    content_area.controls = [profile_view]
+                # else:
+                #     content_area.controls = [ft.Column(controls=[login_button])]
+
+        elif selected_index == 5:  # Settings view
             content_area.controls = [settings_view]
         else:
-            content_area.controls = [views[selected_index]]  # Other views
+            content_area.controls = [views[selected_index]]
 
         page.update()
-
 
 # =============SIDEBAR===================
     def get_sidebar():
@@ -145,48 +149,176 @@ def main(page: ft.Page):
 
 # =============VIEWS===================
 
+    teacher_img = ft.Image(
+        src="teacher.png",  
+        width=350,
+        height=300,
+        fit=ft.ImageFit.CONTAIN
+    )
+
+    zero_img = ft.Image(
+        src="zeroTrust.png",   
+        width=350,
+        height=300,
+        fit=ft.ImageFit.CONTAIN
+    )
+
+    objectives_img = ft.Image(
+        src="objectives.png",   
+        width=500,
+        height=300,
+        fit=ft.ImageFit.CONTAIN
+    )
+
+    roles_img = ft.Image(
+        src="roles.png",   
+        width=500,
+        height=300,
+        fit=ft.ImageFit.CONTAIN
+    )
+
     home_view = ft.Column(
-        controls=[ 
+        controls=[
             ft.Text("Welcome to the Dashboard", size=30, weight="bold", color=ft.Colors.WHITE),
             ft.Text("Explore the features and functionalities.", size=20, color=ft.Colors.WHITE),
-            ft.ResponsiveRow(
+            
+            ft.Row(
                 controls=[
-                    create_content_block("Fraud Detection in Transactions", "Features evaluated to predict anomaly", ft.Colors.BLUE_100, ft.Colors.BLUE_200),
-                    create_content_block("Customer Behaviour Prediction", "Features evaluated to predict their behaviour", ft.Colors.RED_100, ft.Colors.RED_200)
-                ]
-            )
+                    ft.Container(
+                        content=create_card(
+                            "Real-Time Fraud Detection AI system",
+                            "Develop a Real-Time Fraud Detection AI system also leveraging the Knowledge Distillation Process of a fine-tuned Transformer Model to identify suspicious transactions and anomalies such as unusual logins or high-value transactions, ensuring real-time alerts for fraud prevention.",
+                            ft.Colors.BLUE_100,
+                            ft.Colors.BLUE_200
+                        ),
+                        expand=1
+                    ),
+                    ft.Container(
+                        content=teacher_img,
+                        expand=1
+                    )
+                ],
+                spacing=50,
+                alignment=ft.MainAxisAlignment.START
+            ),
+
+            ft.Row(
+                controls=[
+                    ft.Container(
+                        content=teacher_img,
+                        expand=1
+                    ),
+                    ft.Container(
+                        content=create_card(
+                            "AI-Powered Customer Behaviour Prediction system",
+                            "Develop an AI-Powered Customer Behaviour Prediction system using Transformer LLMs such as LLaMA-3 and TabNet (Self-Attention Neural Network) Model fine-tuned on our domain-specific datasets for accurate, computationally efficient predictions  with Knowledge Distillation to create a smaller, efficient and faster student model for predicting customer churn and optimizing personalized marketing strategies.",
+                            ft.Colors.RED_100,
+                            ft.Colors.RED_200
+                        ),
+                        expand=1
+                    ),
+                    
+                ],
+                spacing=50,
+                alignment=ft.MainAxisAlignment.START
+            ),
+
+            
+            ft.Row(
+                controls=[
+                    ft.Container(
+                        content=create_card(
+                            "Knowledge Distillation for Efficient Models",
+                            "Apply knowledge distillation to transfer knowledge from a large pre-trained teacher model to a compact student model, optimizing model performance with reduced inference time and lower computational cost.",
+                            ft.Colors.BLUE_100,
+                            ft.Colors.BLUE_200
+                        ),
+                        expand=1
+                    ),
+                    ft.Container(
+                        content=teacher_img,
+                        expand=1
+                    )
+                ],
+                spacing=50,
+                alignment=ft.MainAxisAlignment.START
+            ),
+
+            ft.Row(
+                controls=[
+                    ft.Container(
+                        content=zero_img,
+                        expand=1
+                    ),
+                    ft.Container(
+                        content=create_card(
+                            "Zero-Trust Security Model",
+                            "Integrate a zero-trust architecture to ensure strict access control, minimizing security risks and ensuring maximum data protection.",
+                            ft.Colors.RED_100,
+                            ft.Colors.RED_200
+                        ),
+                        expand=1
+                    ),
+                ],
+                spacing=50,
+                alignment=ft.MainAxisAlignment.START
+            ),
+
+            ft.Row(
+                controls=[
+                    
+                    ft.Container(
+                        content=create_card(
+                            "Cloud Threat Analysis",
+                            "Utilize Azure SQL Database, Azure Functions, Azure Event Hub and Identity and Access Management for scalable, cost-effective deployment capable of processing large data volumes in real-time. ",
+                            ft.Colors.GREEN_100,
+                            ft.Colors.GREEN_200
+                        ),
+                        expand=1
+                    ),
+                    ft.Container(
+                        content=zero_img,
+                        expand=1
+                    ),
+                ],
+                spacing=50,
+                alignment=ft.MainAxisAlignment.START
+            ),
+
+            ft.Row(
+                controls=[
+                    ft.Container(
+                        content=roles_img,
+                        expand=1
+                    ),
+                    ft.Container(
+                        content=create_card(
+                            "Roles and Permissions",
+                            "Implement Azure Active Directory for secure user authentication and authorization. Use Azure Resource Management for efficient resource allocation and management. \n1. AI Department. \n2. Cyber Security Department. \n3. Finance Analyst Department. \n4. Customer Behaviour Analyst Department.",
+                            ft.Colors.GREEN_100,
+                            ft.Colors.GREEN_200
+                        ),
+                        expand=1
+                    ),
+                ],
+                spacing=50,
+                alignment=ft.MainAxisAlignment.START
+            ),
+
+            objectives_img
         ],
         scroll=ft.ScrollMode.AUTO,
         expand=True
     )
 
+    fraud_report=generate_fraud_report()
     fraud_detection_view = ft.Column(
         controls=[
-            #ft.Text("FD", size=30),
-            ft.ResponsiveRow(
-                controls=[
-                    create_content_block("Live Monitoring", "Real-time analysis of transactions.", ft.Colors.BLUE_100, ft.Colors.BLUE_200),
-                    create_content_block("Anomaly Detection", "Detect unusual behavior automatically.", ft.Colors.RED_100, ft.Colors.RED_200),
-                    create_content_block("Reports", "View fraud detection statistics.", ft.Colors.GREEN_100, ft.Colors.GREEN_200),
-                ]
-            ),
-            ft.ResponsiveRow(
-                controls=[
-                    # Display real churn results by inserting values directly into the string
-                    create_content_block(
-                        "Churn Analysis",
-                        f"Total Number of Records: {fraud_samples} \nFraud Records: {num_fraud} \nNo Fraud Records: {num_no_fraud} \nFraud Rate: {fraud_rate:.2f}%",  # Format churn rate to 2 decimal places
-                        ft.Colors.BLUE_100,
-                        ft.Colors.BLUE_200
-                    ),
-                    create_content_block("Reports", "View fraud detection statistics.", ft.Colors.GREEN_100, ft.Colors.GREEN_200),
-                ]
-            ),
-            ft.Row(
-                controls=[fraud_chart],
-                alignment=ft.MainAxisAlignment.START
+            ft.Container(
+                content=fraud_report,
+                border_radius=15,
+                shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.BLACK54)
             )
-
         ],
         scroll=ft.ScrollMode.AUTO,
         expand=True
@@ -268,25 +400,33 @@ def main(page: ft.Page):
             #     height=500,
             # ),
 
-            ft.Text("Top 5 Customers from FraudTable", size=24, weight='bold'),
-            ft.Container(
-                content=ft.Row(
-                    controls=[
-                        ft.Column(
-                            controls=[fruad_table],
-                            scroll=ft.ScrollMode.AUTO,
-                            expand=True
-                        )
-                    ],
-                    scroll=ft.ScrollMode.AUTO,
-                ),
-                width=1500,
-                height=500,
-            )
+            # ft.Text("Top 5 Customers from FraudTable", size=24, weight='bold'),
+            # ft.Container(
+            #     content=ft.Row(
+            #         controls=[
+            #             ft.Column(
+            #                 controls=[fruad_table],
+            #                 scroll=ft.ScrollMode.AUTO,
+            #                 expand=True
+            #             )
+            #         ],
+            #         scroll=ft.ScrollMode.AUTO,
+            #     ),
+            #     width=1500,
+            #     height=500,
+            # )
         ],
         scroll=ft.ScrollMode.AUTO,
         expand=True
     )
+
+    # profile_view = ft.Column(
+    #     width=500,
+    #     controls=[login_button],  # Initially show login button
+    #     scroll=ft.ScrollMode.AUTO,
+    #     spacing=10,
+    #     alignment=ft.MainAxisAlignment.START
+    # )
 
     profile_view = ft.Column(
         width=500,
@@ -419,6 +559,9 @@ def main(page: ft.Page):
         expand=True
     )
 
+
+    #page.on_login = on_login
+    #page.on_logout = on_logout
     page.add(
         ft.Row(
             controls=[
@@ -428,8 +571,12 @@ def main(page: ft.Page):
             expand=True
         )
     )
+    # if page.route.startswith("/oauth_callback"):
+    #     page.go(page.route)
 
-    page.update()
+    page.update()  
 
 # =============Running the Functions===================
 ft.app(target=main)
+
+

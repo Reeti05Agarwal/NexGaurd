@@ -1,0 +1,30 @@
+[project]
+name = "my_flet_app"                  # The name of your Python project
+version = "0.1.0"                     # Version of your app
+description = "A Flet app demo."     # Short description
+authors = [                           # Your name and email (optional but recommended)
+    { name = "Reeti Agarwal", email = "reeti05agarwal@gmail.com" }
+]
+dependencies = []                     # You can list any pip packages your app needs here
+
+[build-system]
+requires = ["flet-core>=0.14.0"]      # Version of Flet you're using; adjust if needed
+build-backend = "flet_core.build"     # Flet-specific build backend
+
+[tool.flet]
+entrypoint = "app.py"                 # Your main app file (Python file with main function)
+platforms = ["windows", "macos", "linux", "android"]  # Platforms you want to build for
+
+[tool.flet.app]
+name = "My Flet App"                  # The name that will appear on your app
+identifier = "com.example.myfletapp" # Unique package name (like Java/Android style)
+version = "0.1.0"                     # App version
+description = "Built with Flet."     # Optional, shown in some app stores
+
+[tool.flet.app.boot_screen]
+show = true                           # Enable boot screen
+message = "Preparing the app for its first launch…"  # Custom message shown during unpacking
+
+[tool.flet.app.startup_screen]
+show = true                           # Enable startup screen
+message = "Starting up the app…"     # Custom message while loading Python modules

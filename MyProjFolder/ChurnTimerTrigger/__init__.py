@@ -164,7 +164,7 @@ def main(mytimer: TimerRequest) -> None:
         cursor = conn.cursor()
 
         # Fetch rows where churn prediction is not yet processed
-        cursor.execute("SELECT * FROM ChurnTable WHERE Processed=0")
+        cursor.execute("SELECT TOP 1000 * FROM ChurnTable WHERE Processed=0")
         rows = cursor.fetchall()  # by using fetchall, all the rows are returned as tuples, not objects with attributes
 
         # If there are no new records to process, log and exit
