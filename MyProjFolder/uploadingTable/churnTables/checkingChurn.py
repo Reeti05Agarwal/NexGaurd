@@ -16,13 +16,26 @@ def ConnectionString():
     return connection_string
 
 
-def checkingChurnTable():
+
+def checkingChurnTable(number):
     connection_string = ConnectionString()
 
     engine = create_engine(f"mssql+pyodbc:///?odbc_connect={quote_plus(connection_string)}")
-
-    # Query the uploaded data
-    df = pd.read_sql("SELECT * FROM ChurnTable", con=engine)
+    if number==-1:
+        df=pd.read_sql(f"SELECT * FROM ChurnTable", con=engine)
+    else:
+        df=pd.read_sql(f"SELECT TOP {number} * FROM ChurnTable", con=engine)
     return df
 
- 
+def recordsChurnTable():
+    connection_string = ConnectionString()
+    engine = create_engine(f"mssql+pyodbc:///?odbc_connect={quote_plus(connection_string)}")
+
+    # Query to count number of rows
+    df = pd.read_sql("SELECT COUNT(*) AS total_records FROM ChurnTable", con=engine)
+    return df
+
+
+
+print(checkingChurnTable(-1))
+print(recordsChurnTable())

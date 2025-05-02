@@ -19,4 +19,4 @@
 # num_samples, num_churned, churn_rate, num_nochurned = print_churn_results(churn_df)
 # churn_pie = num_churned / num_samples * 100
 # not_churn_pie = num_nochurned / num_samples * 100
-# churn_table = df_to_flet_table(churn_df)  
+   

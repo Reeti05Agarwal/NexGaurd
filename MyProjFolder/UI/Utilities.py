@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 from uploadingTable.churnTables.checkingChurn import checkingChurnTable
 from uploadingTable.fraudTables.checkingFraud import checkingFraudTable
+from uploadingTable.fraudTables.checkingFraud import checkingFraudTable
 load_dotenv()
 
 
@@ -60,7 +61,6 @@ def create_full_card(title, description, color, shadow_color):
     )
 
 def df_to_flet_table(df):
-    # Create DataTable columns from DataFrame headers
     columns = [ft.DataColumn(ft.Text(col)) for col in df.columns] 
     rows = [
         ft.DataRow(
@@ -69,6 +69,11 @@ def df_to_flet_table(df):
         for row in df.values
     ] 
     return ft.DataTable(columns=columns, rows=rows)
+
+def return_flet_table():
+    churn_df=checkingChurnTable(5)
+    fraud_df=checkingFraudTable()
+    return df_to_flet_table(churn_df), df_to_flet_table(fraud_df)
 
 
 def print_churn_results(churn_df):
@@ -80,16 +85,15 @@ def print_churn_results(churn_df):
     return num_samples, num_churned, churn_rate, num_nochurned, processed
 
 def print_fraud_results(fraud_df):
-    logistic = fraud_df['LogisticPrediction']
-    randomforest = fraud_df['RandomForestPrediction']
-    meta = fraud_df['MetaPrediction']
-    fraud_samples = len(fraud_df['MetaPrediction'])
-    num_fraud = sum(fraud_df['MetaPrediction'])
-    processed=fraud_df['Processed'].astype(int).sum()
+    logistic = fraud_df['LR_Prediction']
+    randomforest = fraud_df['RF_Prediction']
+    meta = fraud_df['Meta_Prediction']
+    fraud_samples = len(fraud_df['Meta_Prediction'])
+    num_fraud = sum(fraud_df['Meta_Prediction'])
     num_no_fraud = fraud_samples - num_fraud
     fraud_rate = (num_fraud / fraud_samples) * 100 
 
-    return fraud_samples, num_fraud, fraud_rate, num_no_fraud, processed
+    return fraud_samples, num_fraud, fraud_rate, num_no_fraud
 
 normal_radius = 50
 hover_radius = 60
@@ -308,7 +312,6 @@ def plot_customer_behavior_trend(df):
 
 def plot_churn_rate(churn_pie, not_churn_pie):
     total = churn_pie + not_churn_pie
-
     def on_churn_chart_event(e: ft.PieChartEvent):
         for idx, section in enumerate(churn_chart.sections):
             if idx == e.section_index:
@@ -321,7 +324,6 @@ def plot_churn_rate(churn_pie, not_churn_pie):
                 section.radius = normal_radius
                 section.title_style = normal_title_style
         churn_chart.update()
-
     churn_chart = ft.PieChart(
         sections=[
             ft.PieChartSection(
@@ -344,8 +346,46 @@ def plot_churn_rate(churn_pie, not_churn_pie):
         on_chart_event=on_churn_chart_event,
         expand=True,
     )
-
     return churn_chart
+
+def plot_fraud_chart(fraud_pie, not_fraud_pie):
+    total=fraud_pie+not_fraud_pie
+    def on_fraud_chart_event(e: ft.PieChartEvent):
+        for idx, section in enumerate(fraud_chart.sections):
+            if idx == e.section_index:
+                percent = round((section.value / total) * 100, 1)
+                section.title = f"{section.title.split()[0]} {percent}%"
+                section.radius = hover_radius
+                section.title_style = hover_title_style
+            else:
+                section.title = section.title.split()[0]  # reset to original label
+                section.radius = normal_radius
+                section.title_style = normal_title_style
+        fraud_chart.update()
+
+    fraud_chart = ft.PieChart(
+        sections=[
+            ft.PieChartSection(
+                fraud_pie,
+                title="Fraud",
+                title_style=normal_title_style,
+                color=ft.Colors.RED,
+                radius=normal_radius,
+            ),
+            ft.PieChartSection(
+                not_fraud_pie,
+                title="Not Fraud",
+                title_style=normal_title_style,
+                color=ft.Colors.GREEN,
+                radius=normal_radius,
+            )
+        ],
+        sections_space=0,
+        center_space_radius=40,
+        on_chart_event=on_fraud_chart_event,
+        expand=True,
+    )
+    return fraud_chart
 
 def plot_churn_reasons(df):
     churn_reasons = df['churn_reason'].value_counts().items()
@@ -572,11 +612,11 @@ def plot_churn_over_tenure(df):
 
 
 def generate_fraud_report():
-    fraud_df = checkingFraudTable()   
-    fraud_samples, num_fraud, fraud_rate, num_no_fraud, processed = print_fraud_results(fraud_df)
-    fraud_pie = num_fraud / fraud_samples * 100
-    not_fraud_pie = num_no_fraud / fraud_samples * 100
-    fraud_report= ft.Container(
+    df = checkingFraudTable()   
+    fraud_samples, num_fraud, fraud_rate, num_no_fraud= print_fraud_results(df)
+    fraud_pie = fraud_rate
+    not_fraud_pie = 100-fraud_rate
+    report= ft.Container(
         bgcolor=ft.Colors.BLACK87,
         padding=10,
         border_radius=15,
@@ -587,11 +627,10 @@ def generate_fraud_report():
                     controls=[
                         ft.Container(
                             content=create_content_block(
-                                "Churn Analysis",
-                                f"Total Number of Transactions: {fraud_samples} \n"
-                                f"Scanned Transactions: {processed}\n"
-                                f"Fraud Transactions: {num_fraud} \n"
-                                f"No Fraud Transactions: {num_no_fraud} \n"
+                                "Fraud Analysis",
+                                f"Number of New Transactions: {fraud_samples} \n"
+                                f"Fraud Detected: {num_fraud} \n"
+                                f"No Fraud Detected: {num_no_fraud} \n"
                                 f"Fraud Rate: {fraud_rate:.2f}%",
                                 ft.Colors.TEAL_100,
                                 ft.Colors.TEAL_300
@@ -603,7 +642,7 @@ def generate_fraud_report():
                             height=300,
                         ),
                         ft.Container(
-                            content=plot_fraud_rate(fraud_pie, not_fraud_pie),
+                            content=plot_fraud_chart(fraud_pie, not_fraud_pie),
                             border_radius=15,
                             bgcolor=ft.Colors.BLACK54,
                             col={"sm": 12, "md": 6, "xl": 6},  
@@ -619,7 +658,7 @@ def generate_fraud_report():
                 ft.ResponsiveRow(
                     controls=[
                         ft.Container(
-                            content=plot_fraud_amt(fraud_df),
+                            content=plot_fraud_amt(df),
                             padding=10,
                             border_radius=15,
                             expand=True,
@@ -633,7 +672,7 @@ def generate_fraud_report():
                 ft.ResponsiveRow(
                     controls=[
                         ft.Container(
-                            content=plot_fraud_trend(fraud_df),
+                            content=plot_fraud_trend(df),
                             padding=10,
                             border_radius=15,
                             expand=True,
@@ -645,11 +684,11 @@ def generate_fraud_report():
             ]
         )
     )
-    return fraud_report
+    return report
 
 
 def generate_customer_report():
-    df = checkingChurnTable()   
+    df = checkingChurnTable(-1)   
     num_samples, num_churned, churn_rate, num_nochurned, processed= print_churn_results(df)
     churn_pie = num_churned / processed * 100
     not_churn_pie = num_nochurned / processed * 100
@@ -753,91 +792,48 @@ def generate_customer_report():
 
 
 
-
-# def plot_purchase_behavior(df):
-#     # Extract relevant columns for purchase behavior
-#     conversion_rate = df['conversion_rate'].mean()
-#     aov = df['average_order_value'].mean()
-#     abandoned_cart_rate = df['abandoned_cart_rate'].mean()
-    
-#     labels = ["Conversion Rate", "Average Order Value", "Abandoned Cart Rate"]
-#     values = [conversion_rate, aov, abandoned_cart_rate]
-    
-#     bar_groups = [
-#         ft.BarChartGroup(
-#             x=idx,
-#             bar_rods=[ft.BarChartRod(
-#                 from_y=0,
-#                 to_y=value,
-#                 width=40,
-#                 color=ft.Colors.GREEN if idx == 0 else ft.Colors.RED,
-#                 tooltip=label,
-#                 border_radius=0,
-#             )],
+# def generate_fraud_report():
+#     df = checkingFraudTable()   
+#     fraud_samples, num_fraud, fraud_rate, num_no_fraud= print_fraud_results(df)
+#     fraud_pie = fraud_rate
+#     not_fraud_pie = 100-fraud_rate
+#     report= ft.Container(
+#         bgcolor=ft.Colors.BLACK87,
+#         padding=10,
+#         border_radius=15,
+#         content=ft.Column(
+#             controls=[                
+#                 ft.ResponsiveRow(
+#                     expand=True,
+#                     controls=[
+#                         ft.Container(
+#                             content=create_content_block(
+#                                 "Fraud Analysis",
+#                                 f"Number of New Transactions: {fraud_samples} \n"
+#                                 f"Fraud Detected: {num_fraud} \n"
+#                                 f"No Fraud Detected: {num_no_fraud} \n"
+#                                 f"Fraud Rate: {fraud_rate:.2f}%",
+#                                 ft.Colors.TEAL_100,
+#                                 ft.Colors.TEAL_300
+#                             ),
+#                             border_radius=15,
+#                             shadow=ft.BoxShadow(blur_radius=10, color=ft.Colors.TEAL_300),  
+#                             col={"sm": 12, "md": 6, "xl": 6},  
+#                             expand=True,
+#                             height=300,
+#                         ),
+#                         ft.Container(
+#                             content=plot_fraud_chart(fraud_pie, not_fraud_pie),
+#                             border_radius=15,
+#                             bgcolor=ft.Colors.BLACK54,
+#                             col={"sm": 12, "md": 6, "xl": 6},  
+#                             expand=True,
+#                             height=300,
+#                         ),
+#                     ]
+#                 )
+#             ]
 #         )
-#         for idx, (label, value) in enumerate(zip(labels, values))
-#     ]
-
-#     chart = ft.BarChart(
-#         bar_groups=bar_groups,
-#         border=ft.border.all(1, ft.Colors.GREY_400),
-#         left_axis=ft.ChartAxis(labels_size=40, title=ft.Text("Metric Value"), title_size=40),
-#         bottom_axis=ft.ChartAxis(
-#             labels=[ft.ChartAxisLabel(value=i, label=ft.Container(ft.Text(label), padding=10))
-#                     for i, label in enumerate(labels)],
-#             labels_size=20,
-#         ),
-#         horizontal_grid_lines=ft.ChartGridLines(color=ft.Colors.GREY_300, width=1, dash_pattern=[3, 3]),
-#         tooltip_bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY_300),
-#         max_y=max(values) + 10,
-#         interactive=True,
-#         expand=True,
 #     )
-#     return chart
+#     return report
 
-# def plot_customer_segments(df):
-#     # Extract customer segment data
-#     customer_segments = df['customer_segment'].value_counts().items()
-    
-#     chart = ft.PieChart(
-#         segments=[ft.PieChartSegment(
-#             value=value,
-#             label=segment,
-#             color=ft.Colors.GREEN if idx % 2 == 0 else ft.Colors.RED,
-#         ) for idx, (segment, value) in enumerate(customer_segments)],
-#         expand=True,
-#     )
-#     return chart
-
-# def plot_predictive_analytics(df):
-#     # Assuming predictive columns are in the DataFrame
-#     predicted_growth = df['predicted_sales_growth'].mean()
-#     predicted_churn_rate = df['predicted_churn_rate'].mean()
-    
-#     chart = ft.LineChart(
-#         line_series=[
-#             ft.LineChartSeries(
-#                 name="Predicted Sales Growth",
-#                 data=[ft.LineChartDataPoint(x=0, y=predicted_growth)],
-#                 color=ft.Colors.BLUE,
-#                 tooltip="Predicted Sales Growth"
-#             ),
-#             ft.LineChartSeries(
-#                 name="Predicted Churn Rate",
-#                 data=[ft.LineChartDataPoint(x=1, y=predicted_churn_rate)],
-#                 color=ft.Colors.RED,
-#                 tooltip="Predicted Churn Rate"
-#             ),
-#         ],
-#         border=ft.border.all(1, ft.Colors.GREY_400),
-#         left_axis=ft.ChartAxis(labels_size=20, title="Growth / Churn Rate", title_size=20),
-#         bottom_axis=ft.ChartAxis(labels=["Q1", "Q2"], labels_size=12),
-#         horizontal_grid_lines=ft.ChartGridLines(color=ft.Colors.GREY_300, width=1, dash_pattern=[3, 3]),
-#         tooltip_bgcolor=ft.Colors.with_opacity(0.5, ft.Colors.GREY_300),
-#         max_y=max(predicted_growth, predicted_churn_rate) + 10,
-#         interactive=True,
-#         expand=True,
-#     )
-#     return chart
-
-# Generate Customer Report
