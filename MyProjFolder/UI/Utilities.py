@@ -157,12 +157,11 @@ def plot_fraud_rate(fraud_pie, not_fraud_pie):
         expand=True,
     )
     return fraud_chart
-
 def plot_fraud_amt(df):
-    if 'TransactionAmt' not in df.columns or 'isFraud' not in df.columns:
+    if 'TransactionAmt' not in df.columns or 'Meta_Prediction' not in df.columns:
         return ft.Text("Required columns missing.", color=ft.Colors.RED)
 
-    avg_amounts = df.groupby('isFraud')['TransactionAmt'].mean().items()
+    avg_amounts = df.groupby('Meta_Prediction')['TransactionAmt'].mean().items()
 
     bar_groups = []
     for idx, (fraud_label, avg_amt) in enumerate(avg_amounts):
@@ -197,24 +196,26 @@ def plot_fraud_amt(df):
         ),
         horizontal_grid_lines=ft.ChartGridLines(color=ft.Colors.WHITE10, width=1, dash_pattern=[3, 3]),
         tooltip_bgcolor=ft.Colors.with_opacity(0.7, ft.Colors.WHITE54),
+        tooltip_fit_inside_horizontally=True,
+        tooltip_fit_inside_vertically=True,
         interactive=True,
         expand=True,
     )
 
 def plot_fraud_trend(df):
-    if 'TransactionDT' not in df.columns or 'isFraud' not in df.columns:
+    if 'TransactionID' not in df.columns or 'Meta_Prediction' not in df.columns:
         return ft.Text("Required columns missing.", color=ft.Colors.RED)
 
-    df = df[['TransactionDT', 'isFraud']].copy()
-    df['bucket'] = (df['TransactionDT'] // 1e5).astype(int)
+    df = df[['TransactionID', 'Meta_Prediction']].copy()
+    df['bucket'] = (df['TransactionID'] // 1000).astype(int)  # Smaller bucket size
 
-    grouped = df.groupby('bucket')['isFraud'].sum().reset_index()
+    grouped = df.groupby('bucket')['Meta_Prediction'].sum().reset_index()
 
-    if grouped.shape[0] < 2:
+    if grouped.shape[0] < 2 or grouped['Meta_Prediction'].sum() == 0:
         return ft.Text("Not enough variation to display a trend.", color=ft.Colors.RED)
 
     data_points = [
-        ft.LineChartDataPoint(x=int(row['bucket']), y=int(row['isFraud']))
+        ft.LineChartDataPoint(x=int(row['bucket']), y=int(row['Meta_Prediction']))
         for _, row in grouped.iterrows()
     ]
 
@@ -223,7 +224,7 @@ def plot_fraud_trend(df):
         for _, row in grouped.iterrows()
     ]
 
-    chart = ft.LineChart(
+    return ft.LineChart(
         data_series=[
             ft.LineChartData(
                 data_points=data_points,
@@ -234,29 +235,26 @@ def plot_fraud_trend(df):
             )
         ],
         border=ft.border.all(1, ft.Colors.GREY_400),
-        left_axis=ft.ChartAxis(
-            labels_size=40,
-            title=ft.Text("Fraud Count"),
-            title_size=40,
-        ),
+        left_axis=ft.ChartAxis(labels_size=40, title=ft.Text("Fraud Count"), title_size=40),
         bottom_axis=ft.ChartAxis(
             labels=x_labels,
             labels_size=40,
-            title=ft.Text("Time Bucket"),
+            title=ft.Text("Transaction Buckets"),
             title_size=40,
         ),
         horizontal_grid_lines=ft.ChartGridLines(color=ft.Colors.WHITE10, width=1, dash_pattern=[3, 3]),
         vertical_grid_lines=ft.ChartGridLines(color=ft.Colors.WHITE10, width=1, dash_pattern=[3, 3]),
         tooltip_bgcolor=ft.Colors.with_opacity(0.7, ft.Colors.WHITE54),
+        tooltip_fit_inside_horizontally=True,
+        tooltip_fit_inside_vertically=True,
         min_y=0,
-        max_y=grouped['isFraud'].max() + 1,
+        max_y=grouped['Meta_Prediction'].max() + 1,
         min_x=grouped['bucket'].min(),
         max_x=grouped['bucket'].max(),
         interactive=True,
         expand=True,
     )
 
-    return chart
 
 
 

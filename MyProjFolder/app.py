@@ -169,7 +169,9 @@ def main(page: ft.Page):
                     ),
                     ft.Container(
                         content=fraud_img,
-                        expand=1
+                        expand=1,
+                        border_radius=20,  # You can increase this for more rounding
+                        clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
                     ),
                     
                 ],
@@ -326,6 +328,10 @@ def main(page: ft.Page):
                             "Azure Resource Management",
                             " ", 
                             ft.Colors.RED_100, ft.Colors.RED_200),
+                        create_content_block(
+                            "Azure Authentication (OAuth)",
+                            " ", 
+                            ft.Colors.GREEN_100, ft.Colors.GREEN_100),
                     ]
                 ),
                 ft.ResponsiveRow(
@@ -372,8 +378,8 @@ def main(page: ft.Page):
                         ],
                         scroll=ft.ScrollMode.AUTO,
                     ),
-                    width=1500,
-                    height=500,
+                    expand=True,
+                    padding=10
                 ),
 
                 ft.Text("Top 5 Customers from FraudTable", size=24, weight='bold'),
@@ -388,8 +394,8 @@ def main(page: ft.Page):
                         ],
                         scroll=ft.ScrollMode.AUTO,
                     ),
-                    width=1500,
-                    height=500,
+                    expand=True,
+                    padding=10
                 )
             ],
             scroll=ft.ScrollMode.AUTO,
