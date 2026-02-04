@@ -1,0 +1,14 @@
+# Core API / Logging
+fastapi==0.115.12
+uvicorn==0.34.2
+python-dotenv==1.1.0
+logging==0.5.1.2  # optional, built-in logging works too
+
+# ML / Data
+numpy==2.2.5
+pandas==2.2.3
+scikit-learn==1.6.1
+joblib==1.4.2
+ 
+# Preprocessing
+scipy==1.15.2

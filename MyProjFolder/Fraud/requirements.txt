@@ -1,0 +1,18 @@
+# Core API
+fastapi==0.115.12
+uvicorn==0.34.2
+python-dotenv==1.1.0
+
+# ML / Data
+numpy==2.2.5
+pandas==2.2.3
+scikit-learn==1.6.1
+joblib==1.4.2
+
+# Database
+mysql-connector-python==8.1.1
+SQLAlchemy==2.0.40
+
+# Optional (for HTTP requests / debugging)
+requests==2.32.3
+httpx==0.28.1

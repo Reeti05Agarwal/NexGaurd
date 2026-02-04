@@ -1,0 +1,32 @@
+{
+  "family": "nexguard-fraud-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::992382638158:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "fraud-container",
+      "image": "992382638158.dkr.ecr.us-east-1.amazonaws.com/nexguard-fraud:latest",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 8000 }
+      ],
+      "environment": [
+        { "name": "DB_HOST", "value": "nexguard-db-20260203.circosc0glzy.us-east-1.rds.amazonaws.com" },
+        { "name": "DB_USER", "value": "nexguardadmin" },
+        { "name": "DB_PASSWORD", "value": "YourStrongPassword123!" },
+        { "name": "DB_NAME", "value": "nexguarddb" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/nexguard",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "fraud"
+        }
+      }
+    }
+  ]
+}
